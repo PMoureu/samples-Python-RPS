@@ -1,4 +1,4 @@
-﻿﻿#Dynamic Model Updaters (DMU)
+#Dynamic Model Updaters (DMU)
 
 ## Intro
 
@@ -228,7 +228,7 @@ except:
 Your updater applies only to some specific projects, and you want to automate the process ?
 In this case, you need to add events since Revits starts to check if a project needs the DMU.
 
-startup.py gives access to __uiControlledApplication__ in order to define new events functions.
+startup.py gives access to _ _uiControlledApplication_ _ in order to define new events functions.
 
 For example, the DocumentOpened event allows to read project informations and check a condition.
 DocumentClosing sounds good to unregister the updater.
@@ -352,7 +352,7 @@ Other change types :
 - GetChangeTypeParameter, to check a specific parameter 
     (in our case, we could also watch unboundheight rather than the whole room geometry)
 ```python
-UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), filter, Element.GetChangeTypeParameter("PARAMETER OR ID"))
+UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), filter, Element.GetChangeTypeParameter("PARAM_OR_ID"))
 ```    
     
     
@@ -374,12 +374,14 @@ Good new, no need to write your class again, import is allowed from the startup.
 
 It can be useful to factorize and centralize some functions too.
 
-Be careful with global variables like __window__ in startup.py :
-you may wrap them into --> if __name__ == '__main__': 
+Be careful with global variables like _ _window_ _ in startup.py :
+you may wrap them into --> if _ _name_ _ == '_ _main_ _': 
 
-=> Check the whole code for this version V1
+=> Check the whole code for this version 
 - version-startup\startup.py
 - version-startup\dialogmanager.py
+
+https://github.com/PMoureu/samples-Python-RPS/tree/master/Tutorial-IUpdater/version-startup
 
 => Another approach, about factorizing and centralizing, you can also add the class and 
 functions in a file in RevitPythonShell folder, next to startup.py and init.py, 
@@ -387,7 +389,9 @@ then import only what you need in startup and dialogmanager.
 It takes one file more, but __everything is cleaner__ :
 - version-module\updater.py : contains all declarations (class, functions, updater reference)
 - version-module\startup.py : only import and plug functions 
-- version-module\dialogmanager.py  : only import and plug functions 
+- version-module\dialogmanager.py  : only import and plug functions
+
+https://github.com/PMoureu/samples-Python-RPS/tree/master/Tutorial-IUpdater/version-module
 
 Et voilà ! Thanks to RevitPythonShell our dynamic updater is ready and we didn't even talk about IExternalApplication, 
 or other weird Revit Addins stuffs.
