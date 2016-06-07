@@ -322,7 +322,7 @@ GetChangeTypeGeometry() only works with created elements.
 In our first example, a new created room will not trigger the updater.
 
 New elements are catched by GetChangeTypeElementAddition() 
-and the list is return by UpdaterData.GetAddedElementIds() in the Execute method
+and the list is returned by UpdaterData.GetAddedElementIds() in the Execute method
 
 So we only have to add a second trigger for those new elements :
 ```python
@@ -377,10 +377,7 @@ It can be useful to factorize and centralize some functions too.
 Be careful with global variables like _ _window_ _ in startup.py :
 you may wrap them into --> if _ _name_ _ == '_ _main_ _': 
 
-=> Check the whole code for this version 
-- version-startup\startup.py
-- version-startup\dialogmanager.py
-
+=> Check the whole code for this version :
 https://github.com/PMoureu/samples-Python-RPS/tree/master/Tutorial-IUpdater/version-startup
 
 => Another approach, about factorizing and centralizing, you can also add the class and 
