@@ -99,7 +99,7 @@ class MyRoomUpdater(IUpdater):
 my_updater = MyRoomUpdater(app.ActiveAddInId)
 
 
-########## Registering
+########## Registration
 
 # Switch with a simple bool based on registering state
 if UpdaterRegistry.IsUpdaterRegistered(my_updater.GetUpdaterId(), doc):
@@ -143,7 +143,7 @@ You can also create an optional updater, but without warnings, users will have t
 
 Where -> 'As soon as Revit starts' within RPS means : in the startup.py file.
 
-When -> depends...As shown above, the registering part calls 2 methods (3 or 4 with unregistering) :
+When -> depends...As shown above, the registration calls 2 methods (3 or 4 with unregistering) :
 
 - register the updater (application-wide or document)  => bind the updater to a(ll) document(s) 
 ```python
@@ -209,7 +209,7 @@ try:
     app = __revit__.Application
     my_updater = MyRoomUpdater(app.ActiveAddInId)
     
-    # global registering
+    # global registration
     UpdaterRegistry.RegisterUpdater(my_updater)
     filter = RoomFilter()
     UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), filter, Element.GetChangeTypeGeometry())
@@ -305,7 +305,7 @@ try:
     app = __revit__.Application
     my_updater = MyRoomUpdater(app.ActiveAddInId)
     
-    # plug function on events
+    # plug functions on events
     __uiControlledApplication__.ControlledApplication.DocumentOpened += checkUpdater
     __uiControlledApplication__.ControlledApplication.DocumentClosing += removeUpdater
     __uiControlledApplication__.ApplicationClosing += unreg_RoomUpdater
@@ -356,7 +356,7 @@ UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), filter, Element.GetChangeT
 ```    
     
     
-## IV. Ergonomic Improvment
+## IV. Ergonomic Improvement
 
 I told you it was easy, i lied.
 First, user had to do everything, now he is stuck with an automatic behavior... bravo !
@@ -367,6 +367,8 @@ In order to combine both systems, you can implement a dialogbox to offer a direc
 - 'Disable' button to stop the updater in this doc
 - 'Disable all opened doc' (note : don't prevent from next opening)
 - ...
+
+### Startup + External file
 
 This can be done into an external file plugged to a ribbon button.
 Good new, no need to write your class again, import is allowed from the startup.py file .
@@ -380,7 +382,9 @@ you may wrap them into --> if _ _name_ _ == '_ _main_ _':
 => Check the whole code for this version :
 https://github.com/PMoureu/samples-Python-RPS/tree/master/Tutorial-IUpdater/version-startup
 
-=> Another approach, about factorizing and centralizing, you can also add the class and 
+### Module + Startup + External file
+
+Another approach, about factorizing and centralizing, you can also add the class and 
 functions in a file in RevitPythonShell folder, next to startup.py and init.py, 
 then import only what you need in startup and dialogmanager.
 It takes one file more, but __everything is cleaner__ :
@@ -388,6 +392,7 @@ It takes one file more, but __everything is cleaner__ :
 - version-module\startup.py : only import and plug functions 
 - version-module\dialogmanager.py  : only import and plug functions
 
+=> Check the whole code for this version :
 https://github.com/PMoureu/samples-Python-RPS/tree/master/Tutorial-IUpdater/version-module
 
 Et voilà ! Thanks to RevitPythonShell our dynamic updater is ready and we didn't even talk about IExternalApplication, 
