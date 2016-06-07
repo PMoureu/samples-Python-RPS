@@ -2,7 +2,7 @@
 
 ## Intro
 
-This tool is made to improve users experience by executing some tasks (Updaters) 
+This tool is made to improve user experience by executing some tasks (Updaters) 
 in the projects (Model) when specific changes are detected (Dynamic), like 
 creating/recalculating parameters, or any operation allowed by Revit API during 
 a current transaction (see all forbidden changes :
@@ -124,10 +124,10 @@ else:
 ```
 
 
-## II. Registering improvement : startup.py
+## II. Registration improvement : startup.py
 
 
-### What could be better about registering ?
+### What could be better about registration ?
 
 The first example requires users actions to launch and stop. If you let them manage the switch, 
 they WILL have some suprises. Also, each time they open a project, the warning will remind them how boring it is.
@@ -316,7 +316,7 @@ except:
 
 
 ```
-## III. About ChangeType and newly added/deleted elements
+## III. About ChangeType and Newly Added/Deleted Elements
     
 GetChangeTypeGeometry() only works with created elements.
 In our first example, a new created room will not trigger the updater.
@@ -356,7 +356,7 @@ UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), filter, Element.GetChangeT
 ```    
     
     
-## IV. Ergonomics improvment
+## IV. Ergonomic Improvment
 
 I told you it was easy, i lied.
 First, user had to do everything, now he is stuck with an automatic behavior... bravo !
