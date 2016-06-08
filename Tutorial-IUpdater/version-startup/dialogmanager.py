@@ -58,9 +58,9 @@ if answer == TaskDialogResult.CommandLink1:
 elif answer == TaskDialogResult.CommandLink2:
     
     UpdaterRegistry.RegisterUpdater(my_updater, doc)
-    filter = RoomFilter()
-    UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), filter, Element.GetChangeTypeGeometry())
-    UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), filter, Element.GetChangeTypeElementAddition())
+    roomfilter = RoomFilter()
+    UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), roomfilter, Element.GetChangeTypeGeometry())
+    UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), roomfilter, Element.GetChangeTypeElementAddition())
     
 # 3rd option : disable updater for all opened documents
 elif answer == TaskDialogResult.CommandLink3:
