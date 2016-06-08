@@ -82,12 +82,12 @@ def checkUpdater(sender, args):
     if paramHx2 :
         #register the updater
         UpdaterRegistry.RegisterUpdater(my_updater, doc)
-        filter = RoomFilter()
+        roomfilter = RoomFilter()
         UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), 
-                                   filter, Element.GetChangeTypeGeometry())
+                                   roomfilter, Element.GetChangeTypeGeometry())
                                    
         UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), 
-                                   filter, Element.GetChangeTypeElementAddition())
+                                   roomfilter, Element.GetChangeTypeElementAddition())
         
         # only for the test :
         TaskDialog.Show("MyRoomUpdater", 'MyRoomUpdater is enabled for this project')
