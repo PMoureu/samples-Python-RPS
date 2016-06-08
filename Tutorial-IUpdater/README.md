@@ -1,5 +1,12 @@
 #Dynamic Model Updaters (DMU)
 
+1. [First step : Simple External File](#i-first-step--simple-external-file)
+2. [Registration Improvement : startup.py](#ii-registration-improvement--startuppy)
+ 1. [Simple Case : Application Wide](#simple-case--application-wide)
+ 2. [Less Simple Case : Specific Documents](#less-simple-case--specific-documents)
+3. [About ChangeType and Newly Added/Deleted Elements](#iii-about-changetype-and-newly-addeddeleted-elements)
+4. [Ergonomic Improvement](#iv-ergonomic-improvement)
+
 ## Intro
 
 This tool is made to improve user experience by executing some tasks (Updaters) 
@@ -16,15 +23,17 @@ assuming the model is ready, there are only two steps left, the updater and the 
 
 What matters is where and when register those updaters. This step defines the general behavior 
 and the limits of your tool, depending on how documents are targeted and what kind of 
-transparency you want (meaning how many warnings will be displayed).
+transparency you want (meaning how many warnings will be displayed). RPS allows different paths,
+from a simple external file to a combination with the startup module. Please refer to this [manual 
+for details about RPS configuration](https://daren-thomas.gitbooks.io/scripting-autodesk-revit-with-revitpythonshell/content/the_configure_dialog/index.html).
 
 
-## I. First step : simple External file
+## I. First step : Simple External File
 
 This example focuses on the class and outlines the general syntax.
 The updater reacts to a geometric change in a room and rectifies a shared parameter.
 
-It uses a very easy way of registering the updater in a single document, you can paste
+It uses a very easy way for registering the updater in a single document, you can paste
 code in IronPython Pad or plug it as an external file with a ribbon button,
 good enough to test your class BUT don't keep this way, unless users are your enemies...
 ```python
@@ -115,16 +124,16 @@ else:
     UpdaterRegistry.RegisterUpdater(my_updater, doc)
     
     # simple filter to select the rooms
-    filter = RoomFilter()
+    roomfilter = RoomFilter()
     
     # connect the updater to geometry changes applied on filtered elements (rooms)
-    UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), filter, Element.GetChangeTypeGeometry())
+    UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), roomfilter, Element.GetChangeTypeGeometry())
     
     TaskDialog.Show('MyRoomUpdater', 'MyRoomUpdater is enabled.')
 ```
 
 
-## II. Registration improvement : startup.py
+## II. Registration Improvement : startup.py
 
 
 ### What could be better about registration ?
@@ -152,8 +161,8 @@ UpdaterRegistry.RegisterUpdater(my_updater, doc)
 ```
 - add trigger to events => what elements and what type of changes to watch
 ```python
-UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), filter, Element.GetChangeTypeGeometry())
-UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), doc, filter, Element.GetChangeTypeGeometry())
+UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), roomfilter, Element.GetChangeTypeGeometry())
+UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), doc, roomfilter, Element.GetChangeTypeGeometry())
 ```
 Note : without a document reference in AddTrigger, it applies to all documents using this updater.
 
@@ -163,7 +172,7 @@ That gives us many options :
 - specific document registering and triggering...
 
 
-#### Simple case : Application wide
+#### Simple Case : Application Wide
 
 Your updater applies to all projects opened in Revit ? 
 You only have to register a global DMU on startup (startup.py) and unregister it on shutdown.
@@ -211,8 +220,8 @@ try:
     
     # global registration
     UpdaterRegistry.RegisterUpdater(my_updater)
-    filter = RoomFilter()
-    UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), filter, Element.GetChangeTypeGeometry())
+    roomfilter = RoomFilter()
+    UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), roomfilter, Element.GetChangeTypeGeometry())
     
     # plug the unregistering function to ApplicationClosing event
     __uiControlledApplication__.ApplicationClosing += unreg_RoomUpdater
@@ -223,7 +232,7 @@ except:
 
 
 ```
-#### Less simple case : specific documents
+#### Less Simple Case : Specific Documents
 
 Your updater applies only to some specific projects, and you want to automate the process ?
 In this case, you need to add events since Revits starts to check if a project needs the DMU.
@@ -233,12 +242,15 @@ startup.py gives access to _ _uiControlledApplication_ _ in order to define new 
 For example, the DocumentOpened event allows to read project informations and check a condition.
 DocumentClosing sounds good to unregister the updater.
 
-In the below code, we create 2 functions, one to check if our specific parameter 'DoubleHeight' is 
-found in the project (you can replace this with any test), then run the updater : checkUpdater,
-and the other to unregister the updater : removeUpdater()
+In the below code, we create 2 functions, 
+- checkUpdater() to check if our specific parameter 'DoubleHeight' is 
+found in the project (you can replace this with any test) then run the updater,
+- removeUpdater() to unregister the updater 
+
 These "events functions" need to implement two specific parameters : sender and args.
-- sender is object who called event
+- sender is the object who called event
 - args gives access to the scope.
+
 
 startup.py content :
 
@@ -277,9 +289,9 @@ def checkUpdater(sender, args):
     if paramHx2 :
         # register the updater
         UpdaterRegistry.RegisterUpdater(my_updater, doc)
-        filter = RoomFilter()
+        roomfilter = RoomFilter()
         UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), 
-                                   filter, Element.GetChangeTypeGeometry())
+                                   roomfilter, Element.GetChangeTypeGeometry())
         
         # only for testing :
         TaskDialog.Show("MyRoomUpdater", 'MyRoomUpdater is enabled for this project')
@@ -326,7 +338,7 @@ and the list is returned by UpdaterData.GetAddedElementIds() in the Execute meth
 
 So we only have to add a second trigger for those new elements :
 ```python
-UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), filter, Element.GetChangeTypeElementAddition())
+UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), roomfilter, Element.GetChangeTypeElementAddition())
 ```
 
 and deal with them in the Execute method :
@@ -352,7 +364,7 @@ Other change types :
 - GetChangeTypeParameter, to check a specific parameter 
     (in our case, we could also watch unboundheight rather than the whole room geometry)
 ```python
-UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), filter, Element.GetChangeTypeParameter("PARAM_OR_ID"))
+UpdaterRegistry.AddTrigger(my_updater.GetUpdaterId(), roomfilter, Element.GetChangeTypeParameter("PARAM_OR_ID"))
 ```    
     
     
@@ -376,10 +388,12 @@ Good new, no need to write your class again, import is allowed from the startup.
 
 It can be useful to factorize and centralize some functions too.
 
-Be careful with global variables like _ _window_ _ in startup.py :
-you may wrap them into --> if _ _name_ _ == '_ _main_ _': 
-
+Be careful with global variables like _ _window_ _ in startup.py, you can wrap them into :
+```python
+if __name__ == '__main__': 
+```
 => Check the whole code for this version :
+
 https://github.com/PMoureu/samples-Python-RPS/tree/master/Tutorial-IUpdater/version-startup
 
 ### Module + Startup + External file
@@ -387,13 +401,22 @@ https://github.com/PMoureu/samples-Python-RPS/tree/master/Tutorial-IUpdater/vers
 Another approach, about factorizing and centralizing, you can also add the class and 
 functions in a file in RevitPythonShell folder, next to startup.py and init.py, 
 then import only what you need in startup and dialogmanager.
-It takes one file more, but __everything is cleaner__ :
+It takes one file more, but __everything is cleaner__ with many updaters:
 - version-module\updater.py : contains all declarations (class, functions, updater reference)
 - version-module\startup.py : only import and plug functions 
 - version-module\dialogmanager.py  : only import and plug functions
 
 => Check the whole code for this version :
+
 https://github.com/PMoureu/samples-Python-RPS/tree/master/Tutorial-IUpdater/version-module
 
 Et voilà ! Thanks to RevitPythonShell our dynamic updater is ready and we didn't even talk about IExternalApplication, 
-or other weird Revit Addins stuffs.
+or other weird Revit Addins stuffs, we only have to borrow RPS AddinID for registration. I hope these examples could help
+you to build powerful updaters.
+
+
+##Special thanks to :
+- Cyril Cros (MC BIM)
+- Daren Thomas for letting us cast Python spells
+- Jeremy Tammik 
+- And ALL Revit/Python contributors
