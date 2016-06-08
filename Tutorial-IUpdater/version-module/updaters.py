@@ -69,9 +69,9 @@ myroomupdater = MyRoomUpdater(app.ActiveAddInId)
 
 def doc_register(proj):
     UpdaterRegistry.RegisterUpdater(myroomupdater, proj)
-    filter = RoomFilter()
-    UpdaterRegistry.AddTrigger(myroomupdater.GetUpdaterId(), filter, Element.GetChangeTypeGeometry())
-    UpdaterRegistry.AddTrigger(myroomupdater.GetUpdaterId(), filter, Element.GetChangeTypeElementAddition())
+    roomfilter = RoomFilter()
+    UpdaterRegistry.AddTrigger(myroomupdater.GetUpdaterId(), roomfilter, Element.GetChangeTypeGeometry())
+    UpdaterRegistry.AddTrigger(myroomupdater.GetUpdaterId(), roomfilter, Element.GetChangeTypeElementAddition())
 
 
 def doc_unregister(proj):
