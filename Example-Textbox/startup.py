@@ -103,7 +103,7 @@ list_options = [
     ComboMember('roomsname', 'Select Rooms by Name', 'Rooms',
         select_room_name, ['text'],
         'orange-03.png', 
-        '''Enter the name to filter (text)''', 'ex : chamber'),
+        '''Enter the text to select rooms (text)''', 'ex : chamber'),
     
     ComboMember('coffee', 'Make some Coffee', 'IoT',
         make_some_coffee, ['int','float', 'bool'],
@@ -232,13 +232,11 @@ def add_stacked_buttons(panel):
     member_data_blank = ComboBoxMemberData('blank', 'Select...')
     combo_box.AddItem(member_data_blank)
     
-    members = {}
-    for i, option in enumerate(list_options):
-        mname = "member{0}".format(option.apiname)
-        members[mname] = ComboBoxMemberData(option.apiname, option.title)
-        members[mname].GroupName = option.group
-        members[mname].Image = BitmapImage(Uri(path.join(panel_res_path, option.icon)))
-        combo_box.AddItem(members[mname])
+    for option in list_options:
+        lcombo = ComboBoxMemberData(option.apiname, option.title)
+        lcombo.GroupName = option.group
+        lcombo.Image = BitmapImage(Uri(path.join(panel_res_path, option.icon)))
+        combo_box.AddItem(lcombo)
     
     #set textbox
     text_box = stacked_items[1]
