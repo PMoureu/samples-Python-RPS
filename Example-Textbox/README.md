@@ -1,13 +1,15 @@
 #ComboBox with TextBox Input 
 
-This example shows how you can use stacked items to gather some input functions.
+This example shows how you can use stacked items to gather some 'user input' functions.
 
-![](capture2.png)
+It's hard to make a pretty taskdialog input for each script, but you can build one native textbox input for all and let users enter their options :
 
-It's hard to make a pretty taskdialog input for each script, 
-but you can build one native textbox input for all ! 
 
 ![](capture1.png)
+
+ 
+![](capture2.png)
+
 
 This __startup.py__ script creates a textbox input linked to a combobox.
 
