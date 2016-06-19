@@ -4,56 +4,247 @@ from inspect import getargspec
 AddReference("System.Windows.Forms")
 AddReference("System.Drawing")
 
-from System.Windows.Forms import Application, Form, Label, TextBox
-from System.Windows.Forms import Button, Panel, ToolTip
-from System.Drawing import Size, Point, Color
+from Autodesk.Revit.UI import TaskDialog
+from System.Windows.Forms import Application, Form, HorizontalAlignment 
+from System.Windows.Forms import Label, TextBox, Button, Panel
+from System.Windows.Forms import ToolTip, RadioButton, MonthCalendar
+from System.Windows.Forms import DockStyle, AnchorStyles
+from System.Drawing import Size, Point, Color, SystemFonts
+from System.Drawing import Font, FontStyle, ContentAlignment
+from System import DateTime, Convert
 
-class Cfg:
-    types = { #caution : linked with checkType
-        'text': [str,'Enter some text'],
-        
-        'float': [float,'Enter some Decimal Number'],
-        
-        'int': [int,'Enter some integer number'],
-        
-        'bool': [bool,'Enter Yes/No - 0/1 - false/true...']
-    }
+class Fconfig:
+    width = 400
+    margin = 15
+    smwidth = 370    # width - 2*margin
+    lblwidth = 125   # labels size
+    unitline = 40    # basic element panel height
+    basefont = 'Tahoma'
+    sizefont = 8.6
+    formtitle = 'Enter all parameters'
+    buttonOK = 'OK'
+    buttonCANCEL = 'Cancel'
+    buttonYES = 'Yes'
+    buttonNO = 'No'
+    defdate = 'DD/MM/YYYY'
+    warnMiss = 'One parameter is missing...'
+    warnMess = 'One parameter is messing...'
     
-    nope = {'0','no','n','false','nope','non','faux'}
-    
-    yup = {'1','yes','y','true','yup','oui','vrai'}
+class Types:
 
+    @staticmethod
+    def types(type, option):
+        '''
+        return the needed option depending on the type
+        you can change the keys in typeslist to use 
+        other names when you define signatures in your scripts
+        '''
+        typeslist = {
+            'text': {
+                'type': str,
+                'tooltip': 'Enter some text', 
+                'panel': PanelParameter, 
+                'converter' : lambda x: x
+                },
+            
+            'float': {
+                'type': float,
+                'tooltip': 'Enter some Decimal Number', 
+                'panel': PanelParameter, 
+                'converter' : Types.getFloat
+                },
+            
+            'int': {
+                'type': int,
+                'tooltip': 'Enter integer number', 
+                'panel': PanelParameter, 
+                'converter' : Types.getInt
+                },
+            
+            'bool': {
+                'type': bool,
+                'tooltip': 'Make your choice', 
+                'panel': PanelBool, 
+                'converter' : lambda x: x
+                },
+            
+            'date': {
+                'type': DateTime,
+                'tooltip': 'Make your choice', 
+                'panel': PanelDate, 
+                'converter' : Types.getDate
+                }
+            }
+        return typeslist[type][option]
+        
+    @staticmethod
+    def getFloat(val):
+        try:
+            formatval = float(val)
+        except:
+            formatval = None
+        return formatval
+    
+    @staticmethod
+    def getInt(val):
+        try:
+            formatval = int(float(val))
+        except:
+            formatval = None    
+        return formatval
+        
+    @staticmethod
+    def getDate(val):
+        try:
+            if isinstance(val, DateTime):
+                formatval = val
+            else:
+                formatval = Convert.ToDateTime(val)
+        except:
+            formatval = None    
+        return formatval
+        
+# # # # # # # # # # # # # # # # # # # # # # # #  Textbox
+    
 class PanelParameter(Panel):
     '''
     wrap label and textbox in a panel
     '''
-    def __init__(self, ind, param):
-        self.Height = 20
+    def __init__(self, param):
+        super(PanelParameter, self ).__init__()
+        
+        self.Height = Fconfig.unitline
         self.paramtype = param[1]
         tooltips = ToolTip()
+        self.value = ''
+        
+        
         self.textlabel = Label()
         self.textlabel.Parent = self
-        self.textlabel.Text = '{0} ({1})'.format(param[0],param[1])
-        self.textlabel.Location = Point(10, ind*self.Height)
-        self.textlabel.AutoSize = True
+        self.textlabel.Text = '{0} ({1}) :'.format(param[0],param[1])
+        self.textlabel.Location = Point(0, 0)
+        self.textlabel.Size = Size(Fconfig.lblwidth, Fconfig.unitline)
+        self.textlabel.TextAlign = ContentAlignment.MiddleLeft
         
-        self.value = TextBox()
-        self.value.Parent = self
-        self.value.Location = Point(130, ind*self.Height)
-        self.value.Width = 220
-        tooltips.SetToolTip(self.value, Cfg.types[param[1]][1])
-        self.value.KeyUp += self.onInput
+        self.textbox = TextBox()
+        self.textbox.Parent = self
+        self.textbox.Location = Point(self.textlabel.Right+Fconfig.margin, 10)
+        self.textbox.Width = Fconfig.smwidth-self.textlabel.Width- 2*Fconfig.margin
+        self.textbox.TextChanged += self.onInput
+        
+        tooltips.SetToolTip(self.textbox, Types.types(param[1], 'tooltip'))
+        
         
     def onInput(self, sender, arg):
         '''Display focus background'''
+        self.value = sender.Text
+        checker = Types.types(self.paramtype, 'converter')
         if (len(sender.Text) > 0 and 
-            not InputFormParameters.checkType(sender.Text, self.paramtype)):
+            checker(sender.Text) == None):
             
+            sender.BackColor = Color.LightYellow
+        else:
+            sender.BackColor = Color.Empty
+            
+# # # # # # # # # # # # # # # # # # # # # # # #  Radiobutton
+        
+class PanelBool(Panel):
+    '''
+    wrap label and radiobutton in a panel
+    '''
+    def __init__(self, param):
+        super(PanelBool, self ).__init__()
+        
+        self.Height = Fconfig.unitline
+        tooltips = ToolTip()
+        self.value = True
+        
+        self.textlabel = Label()
+        self.textlabel.Parent = self
+        self.textlabel.Text = param[0]+' :'
+        self.textlabel.Location = Point(0, 0)
+        self.textlabel.Size = Size(Fconfig.lblwidth, Fconfig.unitline)
+        self.textlabel.TextAlign = ContentAlignment.MiddleLeft
+        
+        self.checkyes = RadioButton()
+        self.checkyes.Parent = self
+        self.checkyes.Location = Point(self.textlabel.Right+2*Fconfig.margin, 10)
+        self.checkyes.Text = Fconfig.buttonYES
+        self.checkyes.Checked = True
+        self.checkyes.CheckedChanged += self.onChanged
+        
+        self.checkno = RadioButton()
+        self.checkno.Parent = self
+        self.checkno.Location = Point(self.checkyes.Right, 10)
+        self.checkno.Text = Fconfig.buttonNO
+        self.checkno.CheckedChanged += self.onChanged
+        
+        tooltips.SetToolTip(self, Types.types(param[1], 'tooltip'))
+        
+    def onChanged(self, sender, arg):
+        if sender.Checked:
+            self.value = not self.value
+            
+    def invert(self):
+        self.checkno.Checked = True
+        
+# # # # # # # # # # # # # # # # # # # # # # # #  Calendar
+
+class PanelDate(Panel):
+    '''
+    wrap label and calendar in a panel
+    '''
+    def __init__(self, param):
+        super(PanelDate, self ).__init__()
+        
+        self.Height = 170
+        self.paramtype = param[1]
+        tooltips = ToolTip()
+        self.value = ''
+        
+        self.textlabel = Label()
+        self.textlabel.Parent = self
+        self.textlabel.Text = param[0] + ' :'
+        self.textlabel.Location = Point(0, 0)
+        self.textlabel.Size = Size(Fconfig.lblwidth, Fconfig.unitline*2)
+        self.textlabel.TextAlign = ContentAlignment.MiddleLeft
+        
+        self.textbox = TextBox()
+        self.textbox.Parent = self
+        self.textbox.Text = Fconfig.defdate
+        self.textbox.Location = Point(0, Fconfig.unitline*2)
+        self.textbox.Width = Fconfig.lblwidth-Fconfig.margin
+        self.textbox.TextAlign = HorizontalAlignment.Center
+        self.textbox.TextChanged += self.onInput
+        
+        self.calend = MonthCalendar()
+        self.calend.Parent = self
+        self.calend.Location = Point(Fconfig.lblwidth+5, 0)
+        self.calend.MaxSelectionCount = 1
+        self.calend.DateChanged += self.onSelect
+        
+        tooltips.SetToolTip(self.calend, Types.types(param[1], 'tooltip'))
+        
+    def onSelect(self, sender, arg):
+        date = sender.SelectionStart
+        self.value = date
+        #'{0}/{1}/{2}'.format(date.Year, date.Month, date.Day)
+        
+        zero = lambda x : '0'+str(x) if x < 10 else str(x)
+        self.textbox.Text = '{0}/{1}/{2}'.format(
+            zero(date.Day), zero(date.Month), date.Year)
+        
+    def onInput(self, sender, arg):
+        self.value = Types.getDate(sender.Text)
+        
+        if (len(sender.Text) > 9 and self.value == None): # check constraints
             sender.BackColor = Color.LightYellow
         else:
             sender.BackColor = Color.Empty
         
         
+# # # # # # # # # # # # # # # # # # # # # # # #  Main Class
+
 class InputFormParameters(Form):
     '''
     Generate a form depending on the given parameters
@@ -68,127 +259,127 @@ class InputFormParameters(Form):
         self.signature = list(signature)
         self.parameters = []
         
+        self.Text = Fconfig.formtitle
+        self.Font = Font(Fconfig.basefont, Fconfig.sizefont)
+        #SystemFonts.DialogFont
+
         self.infomain = Label()
         self.infomain.Parent = self
-        self.infomain.Text = funct.__doc__ #todo split x char/line
-        self.infomain.Location = Point(10, 10)
-        self.infomain.AutoSize = True
+        self.infomain.Text = funct.__doc__
+        self.infomain.Location = Point(Fconfig.margin, Fconfig.margin)
+        self.infomain.Size = Size(Fconfig.smwidth, Fconfig.unitline)
         
-    def showBox(self):
-        '''
-        set the box and launch
-        '''
-        hpanel = 40 * len(self.signature)
-        self.Text = 'Enter all parameters'
-        self.Width = 400
-        self.Height = 120 + hpanel
-        tooltips = ToolTip()
+        self.panel = Panel()
+        self.panel.Parent = self
+        self.panel.Location = Point(0, self.infomain.Bottom)
+        self.panel.AutoSize = True               
         
         self.panelparams = []
+        ref = 0
         for i, param in enumerate(self.signature):
-            p = PanelParameter(i, param)
-            p.Parent = self
-            p.Location = Point(10, 35 + i * 20)
-            p.AutoSize = True
+            p = Types.types(param[1],'panel')(param)
+            p.Parent = self.panel
+            p.Location = Point(Fconfig.margin, ref)
+            p.Width = Fconfig.smwidth
             self.panelparams.append(p)
+            ref += p.Height
             
-            
+    def showBox(self):
+        '''
+        set the remaining box controls and launch
+        '''
+        self.buttonpanel = Panel()
+        self.buttonpanel.Parent = self
+        self.buttonpanel.Location = Point(0,self.panel.Bottom)
+        self.buttonpanel.Size = Size(Fconfig.smwidth, 2* Fconfig.unitline)
+        self.buttonpanel.Dock = DockStyle.Bottom
+        
         self.warning = Label()
-        self.warning.Parent = self
-        self.warning.Location = Point(10, 25 + hpanel)
-        self.warning.AutoSize = True
+        self.warning.Parent = self.buttonpanel
+        self.warning.Location = Point(Fconfig.margin, 0)
+        self.warning.Size = Size(Fconfig.smwidth, Fconfig.unitline)
+        self.warning.Font = Font(Fconfig.basefont, Fconfig.sizefont, FontStyle.Bold)
+        self.warning.ForeColor = Color.Coral
+        self.warning.TextAlign = ContentAlignment.MiddleCenter
         
         okay = Button()
-        okay.Parent = self
-        okay.Text = "Ok"
-        okay.Location = Point(150, 30 + hpanel)
-        okay.Width = 150
+        okay.Parent = self.buttonpanel
+        okay.Text = Fconfig.buttonOK
+        okay.Location = Point(50, Fconfig.unitline)
+        okay.Width = 140
         okay.Click += self.onValidate
+        okay.Anchor = AnchorStyles.Right
         
         cancel = Button()
-        cancel.Text = "Cancel"
-        cancel.Parent = self
-        cancel.Location = Point(300, 30 + hpanel)
+        cancel.Text = Fconfig.buttonCANCEL
+        cancel.Parent = self.buttonpanel
+        cancel.Location = Point(okay.Right, Fconfig.unitline)
         cancel.Click += self.onCancel
-            
-        tooltips.SetToolTip(self, "Enter all parameters")
-        tooltips.SetToolTip(okay, "Click to Confirm and Execute")
-        tooltips.SetToolTip(cancel, "Let me out !")
+        cancel.Anchor = AnchorStyles.Right
         
+        self.Width = Fconfig.width
+        self.Height = self.panel.Bottom + 105
         self.CenterToScreen()
         
-        return Application.Run(self)
-        
-    @staticmethod
-    def checkType(val, type):
-        '''
-        return formated parameter or False
-        '''
-        formatval = [] #wrap in list to avoid 0.0 == False
-        try: 
-            if type == 'text':
-                formatval.append(val)
-                
-            elif type == 'float':
-                formatval.append(float(val))
-                
-            elif type == 'int':
-                formatval.append(int(float(val)))
-                
-            elif type == 'bool':
-                if val.lower() in Cfg.nope :
-                    formatval.append(False)
-                    
-                elif val.lower() in Cfg.yup:
-                    formatval.append(True)
-            '''
-            todo : dynamic radio button...
-            and other types, paths, date
-            '''
-        except:
-            formatval = []
-            
-        return formatval
-    
-    def formatType(self, input_params):
-        '''
-        return true and format values if all parameters match the types
-        '''
-        typeOK = 0
-        for i, param in enumerate(self.signature):
-        
-            checking = self.checkType(input_params[i],param[1])
-            
-            if checking:
-                self.parameters.append(checking[0])
-                typeOK += int(isinstance(self.parameters[i], Cfg.types[param[1]][0]))
+        try:
+            if Application.MessageLoop:
+                TaskDialog.Show('UserForm', 'Another window is running...')
             else:
-                self.panelparams[i].value.BackColor = Color.LightYellow
+                Application.Run(self) # todo : dig in ApplicationContext ...
                 
-        return typeOK == len(self.signature)
+        except:
+            TaskDialog.Show('UserForm','Loading failed...')
         
         
     def onValidate(self, sender, event):
         '''
-        count parameters and call formating
+        count parameters and format before executing function
         '''
-        input_params = [p.value.Text for p in self.panelparams if p.value.Text]
+        input_params = [p.value for p in self.panelparams if not p.value == '']
         
-        fsignature = getargspec(self.infunction).args
+        fsignature = getargspec(self.infunction).args #get the given function parameters
         
-        if not (len(self.signature) == len(fsignature) 
-            and len(input_params) == len(fsignature)):
-            self.warning.Text = 'A parameter is missing...'
+        if not (len(self.signature) == len(fsignature) #compare the signature you set
+            and len(input_params) == len(fsignature)): #compare user's parameters 
             
-        elif not self.formatType(input_params):
-            self.warning.Text = 'A parameter is messing...'
-            self.parameters = []
+            self.warning.Text = Fconfig.warnMiss
+            
+        elif not self.formatType(input_params): #get format value
+        
+            self.warning.Text = Fconfig.warnMess
             
         else:
-            self.infunction(*self.parameters)
-            self.Close()
-    
-    
+            try:
+                self.infunction(*self.parameters) # call the given function
+                self.Close()
+                
+            except:
+                TaskDialog.Show('UserForm','The function can\'t run.')
+                self.Close()
+            
+    def formatType(self, input_params):
+        '''
+        return true and save formated values if all parameters match the types
+        '''
+        typeOK = 0
+        self.parameters = []
+        self.warning.Text = ''
+        for i, param in enumerate(self.signature):
+            
+            converter = Types.types(param[1],'converter')
+            formatvalue = converter(input_params[i])
+            
+            if formatvalue == None:
+                self.panelparams[i].textbox.BackColor = Color.LightYellow
+                break
+            else:
+                self.parameters.append(formatvalue)
+                typeOK += int(isinstance(self.parameters[i], 
+                    Types.types(param[1],'type')))
+
+        return typeOK == len(self.signature)
+        
+        
     def onCancel(self, sender, event):
         '''
         Close the form

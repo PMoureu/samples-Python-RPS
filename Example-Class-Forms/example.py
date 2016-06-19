@@ -1,14 +1,14 @@
 __window__.Close()
-from userform import InputFormParameters
 
+# example function definition
 from Autodesk.Revit.UI import TaskDialog
 from Autodesk.Revit.DB import FilteredElementCollector, ElementId, Element, Transaction
 from Autodesk.Revit.DB.Architecture import RoomFilter
 from System.Collections.Generic import List
 
-#function definition
-def selectRoomByNameHeight(text, height, bool1, int1):
-    '''Select Rooms in view containing 'text' where unbounded height < height'''
+def selectRoomByNameHeight(text, height,bool1,int1, date1):
+    '''Select all Rooms in this view containing 'Name' and the given limited height \
+(only the two first parameters matter in this example) :'''
     uidoc = __revit__.ActiveUIDocument
     doc = uidoc.Document
     view = uidoc.ActiveGraphicalView
@@ -19,21 +19,28 @@ def selectRoomByNameHeight(text, height, bool1, int1):
          
     uidoc.Selection.SetElementIds(List[ElementId](select))
     
-    TaskDialog.Show('Select Rooms', 
-        '{0} Rooms named "{1}" where UnboundedHeight < "{2}":'.format(len(select), format(text), height))
+    #feedback test
+    TaskDialog.Show('Test feedback', 
+        '{0} Rooms named "{1}" UnboundedHeight < "{2}":\
+            \nbool: {3}\n number{4}\n date :{5}'.format(
+                len(select), text, height, bool1, int1, date1))
 
+            
+# import class winforms
+from userform import InputFormParameters
 
-#creation of input box + ref function
-dialog = InputFormParameters(selectRoomByNameHeight, 
-    ['Wanted Name','text'], 
-    ['Limited Height','float'], 
-    ['Example bool','bool'],
-    ['Example int','int'],
+# creation of input box
+dialog = InputFormParameters(
+    selectRoomByNameHeight,         # ref function
+    ['Wanted Room Name','text'],    # parameters ...
+    ['Limited Height','float'],
+    ['Activate option ','bool'],
+    ['Number of days','int'],
+    ['Choose The Date', 'date']
     )
 
-#display the form
+# display the form
 dialog.showBox()
-
 
 '''
 #other way 
@@ -42,10 +49,17 @@ dialog = InputFormParameters(selectRoomByNameHeight)
 
 dialog.signature = [
     ['Text to search','text'],
-    ['Limited Height','float']
+    ['Limited Height','float'],
+    ['Activate option ','bool'],
+    ['Number of days','int'],
+    ['Choose The Date', 'date']
     ]
+    
+dialog.Text = 'Window title'
 
 dialog.infomain.Text = 'Give another description'
+
+dialog.panelparams[2].invert() #Default : True
 
 dialog.showBox()
 
