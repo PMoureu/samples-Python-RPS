@@ -29,14 +29,22 @@ def selectRoomByNameHeight(text, height,bool1,int1, date1):
 # import class winforms
 from userform import InputFormParameters
 
+listheight = ['2.80','2.90','3.10','3.50']
+listdays = ['10','15','20','25']
+
 # creation of input box
 dialog = InputFormParameters(
-    selectRoomByNameHeight,         # ref function
-    ['Wanted Room Name','text'],    # parameters ...
-    ['Limited Height','float'],
-    ['Activate option ','bool'],
-    ['Number of days','int'],
-    ['Choose The Date', 'date']
+    selectRoomByNameHeight,                 # ref function
+    
+    ['Wanted Room Name', 'text'],            # type text
+    
+    ['Limited Height', 'float', listheight],  # type decimal with a combobox
+    
+    ['Activate option ', 'bool'],            # type boolean
+    
+    ['Number of days', 'int', listdays, False], # type integer with a combobox (read only)
+    
+    ['Choose The Date', 'date']             # type date
     )
 
 # display the form

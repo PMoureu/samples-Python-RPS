@@ -1,3 +1,7 @@
+# 
+# http://zetcode.com/tutorials/ironpythontutorial/ 
+# https://msdn.microsoft.com/fr-fr/library/system.windows.forms.form(v=vs.110).aspx
+#
 from clr import AddReference
 from inspect import getargspec
 
@@ -7,20 +11,24 @@ AddReference("System.Drawing")
 from Autodesk.Revit.UI import TaskDialog
 from System.Windows.Forms import Application, Form, HorizontalAlignment 
 from System.Windows.Forms import Label, TextBox, Button, Panel
+from System.Windows.Forms import ComboBox, ComboBoxStyle
 from System.Windows.Forms import ToolTip, RadioButton, MonthCalendar
 from System.Windows.Forms import DockStyle, AnchorStyles
 from System.Drawing import Size, Point, Color, SystemFonts
 from System.Drawing import Font, FontStyle, ContentAlignment
-from System import DateTime, Convert
+from System import DateTime, Convert, Object
+from System.Collections.Generic import List
 
 class Fconfig:
+
+    modeDebug = False
     width = 400
     margin = 15
     smwidth = 370    # width - 2*margin
     lblwidth = 125   # labels size
     unitline = 40    # basic element panel height
     basefont = 'Tahoma'
-    sizefont = 8.6
+    sizefont = 8
     formtitle = 'Enter all parameters'
     buttonOK = 'OK'
     buttonCANCEL = 'Cancel'
@@ -30,6 +38,15 @@ class Fconfig:
     warnMiss = 'One parameter is missing...'
     warnMess = 'One parameter is messing...'
     
+
+class ModeDBG:
+
+    @staticmethod
+    def say(txt):
+        if Fconfig.modeDebug:
+            print(txt)
+
+            
 class Types:
 
     @staticmethod
@@ -70,27 +87,39 @@ class Types:
             
             'date': {
                 'type': DateTime,
-                'tooltip': 'Make your choice', 
+                'tooltip': 'Select or enter a day', 
                 'panel': PanelDate, 
                 'converter' : Types.getDate
                 }
             }
+        '''
+        ,'path': {
+            'type': ,
+            'tooltip': 'Browse', 
+            'panel': PanelPath, 
+            'converter' : Types.getPath
+            }
+        '''
         return typeslist[type][option]
-        
+
     @staticmethod
     def getFloat(val):
         try:
             formatval = float(val)
+            ModeDBG.say('\tval {0} formated: {1}'.format(val, formatval))
         except:
             formatval = None
+            ModeDBG.say('\tError with val {0}'.format(val))
         return formatval
     
     @staticmethod
     def getInt(val):
         try:
             formatval = int(float(val))
+            ModeDBG.say('\tval {0} formated: {1}'.format(val, formatval))
         except:
-            formatval = None    
+            formatval = None
+            ModeDBG.say('\tError with val {0}'.format(val))
         return formatval
         
     @staticmethod
@@ -100,15 +129,18 @@ class Types:
                 formatval = val
             else:
                 formatval = Convert.ToDateTime(val)
+            ModeDBG.say('\tval {0} formated: {1}'.format(val, formatval))
+            
         except:
             formatval = None    
+            ModeDBG.say('\tError with val {0}'.format(val))
         return formatval
         
-# # # # # # # # # # # # # # # # # # # # # # # #  Textbox
+# # # # # # # # # # # # # # # # # # # # # # # #  Textbox, Combobox
     
 class PanelParameter(Panel):
     '''
-    wrap label and textbox in a panel
+    wrap label and textbox in a panel (or combobox if a list is given)
     '''
     def __init__(self, param):
         super(PanelParameter, self ).__init__()
@@ -126,7 +158,22 @@ class PanelParameter(Panel):
         self.textlabel.Size = Size(Fconfig.lblwidth, Fconfig.unitline)
         self.textlabel.TextAlign = ContentAlignment.MiddleLeft
         
-        self.textbox = TextBox()
+        
+        #ComboBox if list 
+        if len(param) >= 3 :
+            self.textbox = ComboBox()
+            list_items = List[Object](param[2])
+            self.textbox.Items.AddRange(list_items.ToArray())
+            
+            #dropdownstyle with 4th param if False:
+            if len(param)>3 and not param[3]:
+                self.textbox.DropDownStyle = ComboBoxStyle.DropDownList
+                self.textbox.SelectionChangeCommitted += self.onInput
+                
+        #else simple textbox 
+        else:
+            self.textbox = TextBox()
+
         self.textbox.Parent = self
         self.textbox.Location = Point(self.textlabel.Right+Fconfig.margin, 10)
         self.textbox.Width = Fconfig.smwidth-self.textlabel.Width- 2*Fconfig.margin
@@ -134,13 +181,15 @@ class PanelParameter(Panel):
         
         tooltips.SetToolTip(self.textbox, Types.types(param[1], 'tooltip'))
         
+        ModeDBG.say('panel {0}, top {1}, height :{2}'.format(
+                    param[1], self.Top, self.Height))
         
     def onInput(self, sender, arg):
         '''Display focus background'''
         self.value = sender.Text
         checker = Types.types(self.paramtype, 'converter')
         if (len(sender.Text) > 0 and 
-            checker(sender.Text) == None):
+                    checker(sender.Text) == None):
             
             sender.BackColor = Color.LightYellow
         else:
@@ -181,6 +230,9 @@ class PanelBool(Panel):
         
         tooltips.SetToolTip(self, Types.types(param[1], 'tooltip'))
         
+        ModeDBG.say('panel {0}, top {1}, height :{2}'.format(
+                    param[1], self.Top, self.Height))
+            
     def onChanged(self, sender, arg):
         if sender.Checked:
             self.value = not self.value
@@ -225,6 +277,9 @@ class PanelDate(Panel):
         
         tooltips.SetToolTip(self.calend, Types.types(param[1], 'tooltip'))
         
+        ModeDBG.say('panel {0}, top {1}, height :{2}'.format(
+                    param[1], self.Top, self.Height))
+        
     def onSelect(self, sender, arg):
         date = sender.SelectionStart
         self.value = date
@@ -232,17 +287,18 @@ class PanelDate(Panel):
         
         zero = lambda x : '0'+str(x) if x < 10 else str(x)
         self.textbox.Text = '{0}/{1}/{2}'.format(
-            zero(date.Day), zero(date.Month), date.Year)
+                    zero(date.Day), zero(date.Month), date.Year)
         
     def onInput(self, sender, arg):
         self.value = Types.getDate(sender.Text)
         
-        if (len(sender.Text) > 9 and self.value == None): # check constraints
+        if (len(sender.Text) > 9 and self.value == None):
             sender.BackColor = Color.LightYellow
         else:
             sender.BackColor = Color.Empty
         
         
+# # # # # # # # # # # # # # # # # # # # # # # #  
 # # # # # # # # # # # # # # # # # # # # # # # #  Main Class
 
 class InputFormParameters(Form):
@@ -321,11 +377,17 @@ class InputFormParameters(Form):
         self.Height = self.panel.Bottom + 105
         self.CenterToScreen()
         
+        ModeDBG.say('\npanel top :{0}, bottom :{1}'.format(
+                    self.panel.Top, self.panel.Bottom))
+        ModeDBG.say('\n\nPanel loaded with {0} items\n'.format(
+                    len(self.panelparams)))
+        
+        # Display the form
         try:
             if Application.MessageLoop:
                 TaskDialog.Show('UserForm', 'Another window is running...')
             else:
-                Application.Run(self) # todo : dig in ApplicationContext ...
+                Application.Run(self)
                 
         except:
             TaskDialog.Show('UserForm','Loading failed...')
@@ -336,26 +398,36 @@ class InputFormParameters(Form):
         count parameters and format before executing function
         '''
         input_params = [p.value for p in self.panelparams if not p.value == '']
+        ModeDBG.say('input parameters:\n{0}'.format(
+                        '\n'.join(map(lambda p: str(p), input_params))))
         
-        fsignature = getargspec(self.infunction).args #get the given function parameters
+        #get parameters of the given function 
+        fsignature = getargspec(self.infunction).args 
         
-        if not (len(self.signature) == len(fsignature) #compare the signature you set
-            and len(input_params) == len(fsignature)): #compare user's parameters 
+        #compare the signature you set and user's parameters 
+        if not (len(self.signature) == len(fsignature) 
+                and len(input_params) == len(fsignature)): 
             
             self.warning.Text = Fconfig.warnMiss
             
-        elif not self.formatType(input_params): #get format value
+        #try to get format values
+        elif not self.formatType(input_params): 
         
             self.warning.Text = Fconfig.warnMess
             
         else:
             try:
-                self.infunction(*self.parameters) # call the given function
-                self.Close()
+                # call the given function
+                self.infunction(*self.parameters) 
+                ModeDBG.say('\n\nCall function with:\n  -{0}'.format(
+                        '\n  -'.join(map(lambda p: str(p), self.parameters))))
                 
             except:
                 TaskDialog.Show('UserForm','The function can\'t run.')
+                
+            if not Fconfig.modeDebug:
                 self.Close()
+
             
     def formatType(self, input_params):
         '''
@@ -364,18 +436,28 @@ class InputFormParameters(Form):
         typeOK = 0
         self.parameters = []
         self.warning.Text = ''
+        
         for i, param in enumerate(self.signature):
             
+            ModeDBG.say('try to convert parameter: {0}/{1}...'.format(
+                            param[0], param[1]))
+            
+            #get the right converter
             converter = Types.types(param[1],'converter')
             formatvalue = converter(input_params[i])
             
             if formatvalue == None:
                 self.panelparams[i].textbox.BackColor = Color.LightYellow
+                ModeDBG.say('\t!!!!! failed: {0}...'.format(input_params[i]))
                 break
+                
             else:
                 self.parameters.append(formatvalue)
+                #valid if the saved value check the type
                 typeOK += int(isinstance(self.parameters[i], 
                     Types.types(param[1],'type')))
+                
+                ModeDBG.say('\t\tconversion OK {0}...'.format(formatvalue))
 
         return typeOK == len(self.signature)
         
