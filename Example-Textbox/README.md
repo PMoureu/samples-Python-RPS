@@ -1,3 +1,6 @@
+(NOTE : This approach can help but i recommend this way to automate user inputs, a bit less nested :
+https://github.com/PMoureu/samples-Python-RPS/tree/master/Example-Class-Forms)
+
 #ComboBox with TextBox Input 
 
 This example shows how you can use stacked items to gather some 'user input' functions.
