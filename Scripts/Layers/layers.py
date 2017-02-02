@@ -5,6 +5,8 @@
  format values and display to excel via csv
 
 '''
+__doc__ = 'Get the layers details from the types hosting a compound structure'
+
 print('Loading API Components...')
 import os
 import csv
@@ -13,10 +15,6 @@ import clr
 from Autodesk.Revit.DB import Element, FilteredElementCollector, CategoryType
 from Autodesk.Revit.DB import UnitUtils, DisplayUnitType 
 from Autodesk.Revit.UI import TaskDialog
-
-__doc__ = 'Get the layers details from the types hosting a compound structure'
-
-###################################################### UI PART #################
 
 clr.AddReference("System.Windows.Forms")
 clr.AddReference("System.Drawing")
@@ -27,63 +25,11 @@ from System.Drawing import Size, Point
 from System import Object
 from System.Collections.Generic import List
 
-class Checklist(Form):
-    '''this form eats a list of items to build a checklistbox
-       access to the list of Enabled items via the getValid method (return a simple list)
-    '''
-    def __init__(self, itemlist):
-        
-        height = len(itemlist)*17
-        self.Text = "Select the categories to export"
-        self.Size = Size(300, height + 80)
-        
-        self.check = CheckedListBox()
-        self.check.Parent = self
-        self.check.Location = Point(5, 5)
-        self.check.Size = Size(270, height)
-        
-        # load the list of relevant categories found in the project
-        list_items = List[Object](itemlist)
-        self.check.Items.AddRange(list_items.ToArray())
-        self.check.CheckOnClick = True
-        
-        # set checked by default
-        for i in range(len(itemlist)):
-            self.check.SetItemChecked(i , True)
-            
-        okay = Button()
-        okay.Parent = self
-        okay.Text = 'OK'
-        okay.Location = Point(50, height+10)
-        okay.Width = 140
-        okay.Click += self.onValidate
-        
-        cancel = Button()
-        cancel.Parent = self
-        cancel.Text = 'Cancel'
-        cancel.Location = Point(okay.Right, height+10)
-        cancel.Click += self.onCancel
-        
-        self.CenterToScreen()
-        
-    def getValid(self):
-        checked = self.check.CheckedItems
-        return [checked[i] for i in range(checked.Count)]
-            
-    def onValidate(self, sender, event):
-        self.DialogResult = DialogResult.OK
-        self.Close()
-        
-    def onCancel(self, sender, event):
-        self.DialogResult = DialogResult.Cancel
-        self.Close()
-        
-###################################################### CONFIG PART #############
-
-# Anchors
 uidoc = __revit__.ActiveUIDocument
 doc = __revit__.ActiveUIDocument.Document
 view = uidoc.ActiveGraphicalView
+
+###################################################### CONFIG PART #############
 
 # Base Units for conversion
 USER_UNIT_IN = DisplayUnitType.DUT_DECIMAL_FEET
@@ -150,15 +96,68 @@ def layers_from(onetype):
 
     return structure
 
+###################################################### UI PART #################
+
+class Checklist(Form):
+    '''this form eats a list of items to build a checklistbox
+       access to the list of Enabled items via the getValid method (return a simple list)
+    '''
+    def __init__(self, itemlist):
+        
+        height = len(itemlist)*17
+        self.Text = "Select the categories to export"
+        self.Size = Size(300, height + 80)
+        
+        self.check = CheckedListBox()
+        self.check.Parent = self
+        self.check.Location = Point(5, 5)
+        self.check.Size = Size(270, height)
+        
+        # load the list of relevant categories found in the project
+        list_items = List[Object](itemlist)
+        self.check.Items.AddRange(list_items.ToArray())
+        self.check.CheckOnClick = True
+        
+        # set checked by default
+        for i in range(len(itemlist)):
+            self.check.SetItemChecked(i , True)
+            
+        okay = Button()
+        okay.Parent = self
+        okay.Text = 'OK'
+        okay.Location = Point(50, height+10)
+        okay.Width = 140
+        okay.Click += self.onValidate
+        
+        cancel = Button()
+        cancel.Parent = self
+        cancel.Text = 'Cancel'
+        cancel.Location = Point(okay.Right, height+10)
+        cancel.Click += self.onCancel
+        
+        self.CenterToScreen()
+        
+    def getValid(self):
+        checked = self.check.CheckedItems
+        return [checked[i] for i in range(checked.Count)]
+            
+    def onValidate(self, sender, event):
+        self.DialogResult = DialogResult.OK
+        self.Close()
+        
+    def onCancel(self, sender, event):
+        self.DialogResult = DialogResult.Cancel
+        self.Close()
+        
 ###################################################### FUNCT PART ###############
 
 def is_compound(onetype):
     ''' return True/False if type contain a valid compound struct
     '''
-    cmp = False
+    comp = False
     if 'GetCompoundStructure' in dir(onetype) and onetype.GetCompoundStructure():
-        cmp = True
-    return cmp
+        comp = True
+    return comp
     
     
 def get_types_by(idcat):
@@ -217,7 +216,7 @@ def export_csv_group(group):
 
 print('Searching and Looping...')
 # Build a dict of categories from the project, exclude non-compound types and non-model category
-categories_cmp = {}
+categories_comp = {}
 
 categories = doc.Settings.Categories.ForwardIterator()
 categories.Reset()
@@ -227,17 +226,17 @@ while categories.MoveNext():
     
     if cat.CategoryType == CategoryType.Model:
         if get_types_by(cat.Id):
-            categories_cmp[cat.Name] = cat
+            categories_comp[cat.Name] = cat
 
 __window__.Close()
 
 # call dialog to check the relevant types
-dialog_topics = sorted(categories_cmp.keys())
+dialog_topics = sorted(categories_comp.keys())
 dialog = Checklist(dialog_topics)
 
 if dialog.ShowDialog() == DialogResult.OK:    
     # build list of categoryID from selected items
-    select_cat = [categories_cmp[item].Id for item in dialog.getValid()]
+    select_cat = [categories_comp[item].Id for item in dialog.getValid()]
     
     if select_cat:
         export_csv_group(select_cat)
