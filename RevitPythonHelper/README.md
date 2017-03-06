@@ -29,6 +29,7 @@ Tips:
 - Add ```from rph import h``` in the RevitPythonShell ```__init__.py``` file to call the form more easily.
 - Sort columns by clicking on headers
 - Don't forget the  ```_``` in the console (reference of the last return object):
+
      ```python
     >>>doc.Application
     <Autodesk.Revit.ApplicationServices.Application object at 0x0000000000000033 >
