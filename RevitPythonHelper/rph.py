@@ -136,7 +136,7 @@ class RevitPythonHelper(Form):
         self.close.Click += self.on_close
         self.table.MouseEnter += self.get_focus
         self.table.CellContentDoubleClick += self.on_val_double_click
-        self.table.SortCompare += self.sort_by_name
+        #self.table.SortCompare += self.sort_by_name  # TODO double sort 
         
     def update_info(self, text):
         '''Display main info in the richtextbox
@@ -328,7 +328,7 @@ def apidoc_linker(obj):
         if querypath and querypath[0] == 'Autodesk':
             querystr = querypath.pop()
             txt = 'http://www.revitapidocs.com/'
-            txt += '{vernum}/?query={name}#searchModal'.format(
+            txt += '{vernum}/?query={name}'.format(   # + %20 class or enum...
                 vernum=version, name=querystr)
     except:
         pass # find a .Net or ironpython online doc
